@@ -5,12 +5,13 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
 export function SearchForm() {
   const [query, setQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedModel, setSelectedModel] = useState<string>("llama3")
   const { toast } = useToast()
 
   useEffect(() => {
@@ -19,10 +20,23 @@ export function SearchForm() {
       setQuery(event.detail)
     }
 
+    // Listen for model changes
+    const handleModelChange = (event: CustomEvent<string>) => {
+      setSelectedModel(event.detail)
+    }
+
+    // Check if there's a stored model in localStorage
+    const storedModel = localStorage.getItem("selectedModel")
+    if (storedModel) {
+      setSelectedModel(storedModel)
+    }
+
     window.addEventListener("setSearchQuery", handleSetQuery as EventListener)
+    window.addEventListener("modelChanged", handleModelChange as EventListener)
 
     return () => {
       window.removeEventListener("setSearchQuery", handleSetQuery as EventListener)
+      window.removeEventListener("modelChanged", handleModelChange as EventListener)
     }
   }, [])
 
@@ -38,7 +52,7 @@ export function SearchForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, model: selectedModel }),
       })
 
       const result = await response.json()
@@ -74,7 +88,10 @@ export function SearchForm() {
       />
       <Button type="submit" disabled={isLoading}>
         {isLoading ? (
-          "Processing..."
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
         ) : (
           <>
             <Search className="mr-2 h-4 w-4" />
