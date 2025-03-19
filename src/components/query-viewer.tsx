@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AlertCircle } from "lucide-react"
 
 interface QueryResult {
   sql: string
@@ -41,11 +42,24 @@ export function QueryViewer() {
     return null
   }
 
+  const isFallbackQuery = () => {
+    return result.explanation && result.explanation.includes("fallback")
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Generated Query</CardTitle>
-        <CardDescription>SQL query generated from your natural language input</CardDescription>
+        <CardDescription>
+          {isFallbackQuery() ? (
+            <span className="flex items-center">
+              <AlertCircle className="h-4 w-4 text-amber-500 mr-2" />
+              Using rule-based fallback (Ollama unavailable)
+            </span>
+          ) : (
+            "SQL query generated from your natural language input"
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="sql">

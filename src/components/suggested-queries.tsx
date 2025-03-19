@@ -3,16 +3,25 @@
 import { Button } from "@/components/ui/button"
 
 const EXAMPLE_QUERIES = [
-  "Show me the top 10 companies by valuation",
-  "Which industries have the most unicorns?",
-  "What's the average valuation of companies in the fintech sector?",
-  "List companies founded after 2020",
-  "Show me companies from the United States in the AI industry",
+  "Show me all employees in the IT department",
+  "How many employees do we have in each department?",
+  "List all employees hired in the last year",
+  "What is the average salary by department?",
+  "Show me the top 10 highest paid employees",
+  "How many employees are there in each city?",
+  "List all employees who are managers",
+  "Show me all departments and their employee count",
+  "Find all transactions from last month",
+  "What are our top selling products?",
+  "Show me customer information with their recent orders",
+  "List all projects with their assigned employees",
+  "What is the total revenue by product category?",
+  "Show me attendance records for employees in the Finance department",
+  "Find all overdue tasks and who they're assigned to",
 ]
 
 export function SuggestedQueries() {
   const handleQueryClick = (query: string) => {
-    // Create a custom event to update the search form
     window.dispatchEvent(new CustomEvent("setSearchQuery", { detail: query }))
   }
 

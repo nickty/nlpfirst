@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { generateAndExecuteQuerySimplified, generateSQLWithRuleBased, executeQuery } from "@/app/actions"
 
 export function SearchForm() {
   const [query, setQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState<string>("llama3")
+  const [ollamaEnabled, setOllamaEnabled] = useState(true)
   const { toast } = useToast()
+  const [usingFallback, setUsingFallback] = useState(false)
 
   useEffect(() => {
     // Listen for suggested query clicks
@@ -25,18 +28,31 @@ export function SearchForm() {
       setSelectedModel(event.detail)
     }
 
+    // Listen for Ollama enabled/disabled changes
+    const handleOllamaEnabledChange = (event: CustomEvent<boolean>) => {
+      setOllamaEnabled(event.detail)
+    }
+
     // Check if there's a stored model in localStorage
     const storedModel = localStorage.getItem("selectedModel")
     if (storedModel) {
       setSelectedModel(storedModel)
     }
 
+    // Check if Ollama is disabled in localStorage
+    const storedOllamaEnabled = localStorage.getItem("ollamaEnabled")
+    if (storedOllamaEnabled !== null) {
+      setOllamaEnabled(storedOllamaEnabled === "true")
+    }
+
     window.addEventListener("setSearchQuery", handleSetQuery as EventListener)
     window.addEventListener("modelChanged", handleModelChange as EventListener)
+    window.addEventListener("ollamaEnabledChanged", handleOllamaEnabledChange as EventListener)
 
     return () => {
       window.removeEventListener("setSearchQuery", handleSetQuery as EventListener)
       window.removeEventListener("modelChanged", handleModelChange as EventListener)
+      window.removeEventListener("ollamaEnabledChanged", handleOllamaEnabledChange as EventListener)
     }
   }, [])
 
@@ -47,18 +63,28 @@ export function SearchForm() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/generate-sql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query, model: selectedModel }),
-      })
+      let result
+      setUsingFallback(false) // Reset fallback status
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to generate SQL")
+      if (ollamaEnabled) {
+        try {
+          // Try Ollama with fallback
+          result = await generateAndExecuteQuerySimplified(query, selectedModel)
+        } catch (error) {
+          // If there's an error, we're likely using the fallback
+          setUsingFallback(true)
+          throw error
+        }
+      } else {
+        // Skip Ollama and use rule-based approach directly
+        setUsingFallback(true)
+        const parsedResponse = await generateSQLWithRuleBased(query)
+        const data = await executeQuery(parsedResponse.sql)
+        result = {
+          sql: parsedResponse.sql,
+          explanation: parsedResponse.explanation,
+          data,
+        }
       }
 
       // Store the result in localStorage to be accessed by other components
@@ -90,7 +116,7 @@ export function SearchForm() {
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
+            {usingFallback ? "Using fallback..." : "Processing..."}
           </>
         ) : (
           <>

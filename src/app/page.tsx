@@ -2,7 +2,6 @@ import { SearchForm } from "@/components/search-form"
 import { QueryViewer } from "@/components/query-viewer"
 import { ResultsViewer } from "@/components/results-viewer"
 import { SuggestedQueries } from "@/components/suggested-queries"
-import { DatabaseTest } from "@/components/database-test"
 import { LocalModelSelector } from "@/components/local-model-selector"
 
 export default function Home() {
@@ -24,10 +23,6 @@ export default function Home() {
         <SuggestedQueries />
       </div>
 
-      {/* Database connection test */}
-      <DatabaseTest />
-
-      {/* These components will be populated when we implement the functionality */}
       <div className="mt-8 space-y-6">
         <QueryViewer />
         <ResultsViewer />
